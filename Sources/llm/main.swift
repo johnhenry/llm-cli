@@ -63,6 +63,20 @@ struct LLMCli {
                 await StatusCommand.run(args: args)
             }
 
+        case "voice":
+            if args.contains("--help") || args.contains("-h") {
+                VoiceCommand.printUsage()
+            } else {
+                await VoiceCommand.run(args: args)
+            }
+
+        case "setup-voice":
+            if args.contains("--help") || args.contains("-h") {
+                SetupVoiceCommand.printUsage()
+            } else {
+                await SetupVoiceCommand.run(args: args)
+            }
+
         case "help", "--help", "-h":
             printHelp()
 
@@ -85,6 +99,8 @@ struct LLMCli {
         Commands:
           generate, gen, g      Generate text from a prompt
           chat, c               Interactive conversation mode
+          voice                 Voice interaction mode
+          setup-voice           Setup voice permissions (run first!)
           tools, t              Manage and demonstrate tool calling
           serve, s              Start HTTP API server
           templates             Manage prompt templates
@@ -94,9 +110,13 @@ struct LLMCli {
           help, -h              Show this help message
 
         Examples:
+          llm setup-voice                 # First time setup for voice
           llm status
           llm generate "Explain Swift concurrency"
           llm chat
+          llm chat --voice                # Voice chat (after setup-voice)
+          llm voice                       # Quick voice question
+          llm voice --listen              # Speech to text
           llm serve --port 8765
           llm tools --list
 
