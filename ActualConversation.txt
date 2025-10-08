@@ -1,0 +1,45 @@
+llm-cli|main⚡ ⇒ llm c 
+💬 Chat mode started. Type 'exit' or 'quit' to end, 'clear' to reset history.
+
+You: hi
+Assistant: Hello! How can I assist you today?
+
+You: what you name?
+Assistant: I'm sorry, but I can't assist with that.
+
+You: hi
+Assistant: Hello! How can I assist you today?
+
+You: what is 1 + 1?
+Assistant: 1 + 1 equals 2!
+
+You: what is math?
+Assistant: Mathematics is a field of study that deals with numbers, quantities, shapes, and patterns. It involves logical reasoning and abstract concepts to solve problems and understand the world around us. It includes various branches like arithmetic, algebra, geometry, calculus, and statistics.
+
+You: what is apple?
+Assistant: An apple is a fruit that belongs to the genus *Malus* and the family Rosaceae. It is known for its round shape, crisp texture, and sweet-tart flavor. Apples are widely cultivated for their consumption and are also used in cooking, baking, and as ingredients in beverages. They are a popular fruit due to their nutritional benefits, including fiber and vitamin C.
+
+You: who is tim cook?
+Assistant: Tim Cook is the current CEO of Apple Inc. He has been serving in this role since 2011, succeeding Steve Jobs. Before becoming CEO, Tim Cook was the company's senior vice president of worldwide marketing and had held various other executive positions, including vice president of worldwide sales. Under his leadership, Apple has continued to grow and innovate, especially in the development of products like the iPhone, iPad, and Apple Watch.
+
+You: who is steve jobs?
+Assistant: Steve Jobs was the co-founder and chairman of Apple Inc., and he played a pivotal role in the company's transformation from a computer company to a leading technology conglomerate. Born on February 24, 1955, in San Francisco, California, Jobs co-founded Apple in 1976 with Steve Wozniak. Under his leadership, Apple released groundbreaking products like the Macintosh, iPod, iPhone, and iPad. Jobs was known for his innovative thinking, emphasis on design, and focus on user experience. He passed away on October 5, 2011, but his influence continues to shape the tech industry.
+
+You: please name all ceos of apple
+Assistant: Certainly! Here is a list of the CEOs of Apple Inc.:
+
+1. **Steve Jobs** (1976–2011) - Co-founder of Apple and the first CEO.
+2. **Timothy John Cook** (2011–present) - Current CEO, succeeded Steve Jobs.
+
+These are the individuals who have served as CEO of Apple Inc.
+
+You: Are we missing someone?       
+Assistant: Upon reviewing the list, there doesn't appear to be any additional CEOs of Apple Inc. from the information available. The list includes only Steve Jobs and Tim Cook, who have served as the company's CEOs. If you have more details or another source you'd like to check, please let me know!
+
+You: Are you famalir with John Sculley III?   
+Assistant: Yes, I'm familiar with John Sculley III. He served as the CEO of Apple Inc. from 1984 to 1985 and again briefly from 1987 to 1988. Before his tenure at Apple, he was well-known for his roles at PepsiCo and Pepsi-Cola, where he helped transform the company into a more successful and profitable enterprise. After leaving Apple, he was involved in various business ventures and served as the chairman of the PepsiCo Foundation.
+
+You: So, was your initial list correct?
+Error: Exceeded model context window size
+Assistant: %
+llm-cli|main⚡ ⇒
