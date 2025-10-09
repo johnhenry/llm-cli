@@ -68,8 +68,10 @@ struct ServeCommand {
 
         listener.start(queue: .global())
 
-        // Keep the server running
-        try await Task.sleep(for: .seconds(Int.max))
+        // Keep the server running indefinitely
+        while true {
+            try await Task.sleep(for: .seconds(3600)) // Sleep for 1 hour at a time
+        }
     }
 
     private static func handleConnection(_ connection: NWConnection, llm: LLM, output: OutputHandler) async {
