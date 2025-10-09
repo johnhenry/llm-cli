@@ -2,7 +2,14 @@
 
 > Your on-device LLM, everywhere you can type.
 
-A simple, extensible command-line interface for accessing Apple's on-device Foundation Models on macOS 26 (Tahoe).
+A simple, extensible command-line interface **and native GUI app** for accessing Apple's on-device Foundation Models on macOS 26 (Tahoe).
+
+## 🎨 Two Interfaces, One API
+
+**CLI** - Powerful command-line interface for automation and scripting
+**GUI** - Beautiful native macOS app with menu bar icon and chat interface
+
+[See GUI App Documentation](GUI_README.md)
 
 ## Features
 
@@ -17,20 +24,37 @@ A simple, extensible command-line interface for accessing Apple's on-device Foun
 
 ## Installation
 
+### CLI Tool
+
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd llm-cli
 
-# Build the project
-swift build -c release
+# Build the CLI
+swift build -c release --product llm
 
 # Create an alias (add to ~/.zshrc or ~/.bashrc)
-alias llm="./.build/release/llm"
+alias llm="./.build/arm64-apple-macosx/release/llm"
 
 # Or install to PATH
-cp ./.build/release/llm /usr/local/bin/
+cp .build/arm64-apple-macosx/release/llm /usr/local/bin/
 ```
+
+### GUI App
+
+```bash
+# Build the GUI app
+swift build -c release --product LLMApp
+
+# Launch the app
+open .build/arm64-apple-macosx/release/LLMApp
+
+# Optional: Copy to Applications folder
+cp -r .build/arm64-apple-macosx/release/LLMApp.app /Applications/
+```
+
+For detailed GUI documentation, see [GUI_README.md](GUI_README.md).
 
 ## Quick Start
 
