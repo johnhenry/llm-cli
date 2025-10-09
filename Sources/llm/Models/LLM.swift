@@ -19,10 +19,24 @@ struct GenerationResult: Codable {
     let elapsed: Double
 }
 
-enum LLMError: Error {
+enum LLMError: Error, LocalizedError {
     case modelNotAvailable(String)
     case generationFailed(String)
     case invalidConfiguration
+    case contextWindowExceeded
+
+    var errorDescription: String? {
+        switch self {
+        case .modelNotAvailable(let reason):
+            return "Model not available: \(reason)"
+        case .generationFailed(let reason):
+            return "Generation failed: \(reason)"
+        case .invalidConfiguration:
+            return "Invalid configuration"
+        case .contextWindowExceeded:
+            return "Context window exceeded. Try clearing history with 'llm history --clear' or use a shorter prompt."
+        }
+    }
 }
 
 final class LLM: @unchecked Sendable {
@@ -92,7 +106,14 @@ final class LLM: @unchecked Sendable {
 
                     continuation.finish()
                 } catch {
-                    continuation.finish(throwing: error)
+                    // Check for context window errors
+                    let errorMessage = error.localizedDescription.lowercased()
+                    if errorMessage.contains("context") &&
+                       (errorMessage.contains("window") || errorMessage.contains("size") || errorMessage.contains("length")) {
+                        continuation.finish(throwing: LLMError.contextWindowExceeded)
+                    } else {
+                        continuation.finish(throwing: error)
+                    }
                 }
             }
         }

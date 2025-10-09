@@ -7,6 +7,11 @@ struct ChatCommand {
         // Parse arguments
         var modelSize: ModelSize = .medium
 
+        // Check for default model from environment
+        if let envModel = ProcessInfo.processInfo.environment["LLM_MODEL"] {
+            modelSize = ModelSize(rawValue: envModel) ?? .medium
+        }
+
         var i = 0
         while i < args.count {
             let arg = args[i]
