@@ -449,6 +449,11 @@ struct LLMCli {
                         if let pid = components.first {
                             output.printMessage("  • Chat session (PID \(pid))")
                         }
+                    } else if line.contains("llm generate") || line.contains("llm gen") || line.contains("llm g ") {
+                        let components = line.components(separatedBy: " ")
+                        if let pid = components.first {
+                            output.printMessage("  • Generate task (PID \(pid))")
+                        }
                     }
                 }
 

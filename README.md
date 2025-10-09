@@ -97,7 +97,7 @@ llm chat --clear
 ### Session Management
 
 ```bash
-# View active sessions
+# View active sessions (chat, serve, and active generate tasks)
 llm ps
 
 # Stop a specific session by PID
@@ -109,6 +109,8 @@ llm stop --servers
 # Stop all llm sessions
 llm stop --all
 ```
+
+**Note:** Generate tasks appear in `llm ps` while they're running, but they're typically short-lived (completing in seconds). Chat and server sessions are long-running processes.
 
 ### HTTP API Server
 
