@@ -6,6 +6,7 @@ struct ChatCommand {
 
         // Parse arguments
         var modelSize: ModelSize = .medium
+        var mcpServers: [String] = []
 
         // Check for default model from environment
         if let envModel = ProcessInfo.processInfo.environment["LLM_MODEL"] {
@@ -22,6 +23,11 @@ struct ChatCommand {
                 if i < args.count {
                     modelSize = ModelSize(rawValue: args[i]) ?? .medium
                 }
+            case "--mcp-server":
+                i += 1
+                if i < args.count {
+                    mcpServers.append(args[i])
+                }
             case "--clear":
                 await HistoryStore.shared.clear()
                 output.printMessage("💬 Conversation history cleared")
@@ -35,7 +41,13 @@ struct ChatCommand {
         output.printMessage("💬 Chat mode started. Type 'exit' or 'quit' to end, 'clear' to reset history.\n")
 
         do {
-            let llm = try LLM(size: modelSize)
+            let llm = try await LLM(size: modelSize)
+
+            // Load MCP tools if servers specified
+            var mcpClients: [MCPClientWrapper] = []
+            if !mcpServers.isEmpty {
+                await loadMCPTools(serverNames: mcpServers, llm: llm, output: output, clients: &mcpClients)
+            }
 
             while true {
                 // Read user input
@@ -80,9 +92,37 @@ struct ChatCommand {
                 print() // Extra newline for spacing
             }
 
+            // Disconnect MCP clients on exit
+            for client in mcpClients {
+                await client.disconnect()
+            }
+
         } catch {
             output.printError(error)
         }
+    }
+
+    @MainActor
+    private static func loadMCPTools(serverNames: [String], llm: LLM, output: OutputHandler, clients: inout [MCPClientWrapper]) async {
+        output.printMessage("🔌 Loading MCP tools from \(serverNames.count) server(s)...\n")
+
+        for serverName in serverNames {
+            do {
+                let (client, adapters) = try await MCPToolManager.loadToolsFromServer(serverName: serverName)
+                clients.append(client)
+
+                // Register tools with LLM
+                for adapter in adapters {
+                    llm.registerTool(adapter)
+                }
+
+                output.printMessage("  ✅ Loaded \(adapters.count) tool(s) from '\(serverName)'")
+            } catch {
+                output.printMessage("  ⚠️  Failed to load '\(serverName)': \(error.localizedDescription)")
+            }
+        }
+
+        output.printMessage("")
     }
 
     static func printUsage() {
@@ -90,16 +130,19 @@ struct ChatCommand {
         Usage: llm chat [options]
 
         Options:
-          --model, -m <size>    Model size (small, medium, large)
-          --clear               Clear conversation history and exit
+          --model, -m <size>       Model size (small, medium, large)
+          --mcp-server <name>      Load tools from MCP server (can be used multiple times)
+          --clear                  Clear conversation history and exit
 
         Interactive commands:
-          exit, quit            Exit chat mode
-          clear                 Clear conversation history
+          exit, quit               Exit chat mode
+          clear                    Clear conversation history
 
         Examples:
           llm chat
           llm chat --model large
+          llm chat --mcp-server filesystem
+          llm chat --mcp-server fs --mcp-server github
           llm chat --clear
         """)
     }

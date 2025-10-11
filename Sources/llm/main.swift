@@ -50,6 +50,9 @@ struct LLMCli {
                 await ServeCommand.run(args: args)
             }
 
+        case "serve-mcp":
+            await ServeMCPCommand.run(args: args)
+
         case "templates":
             await templatesCommand(args: args)
 
@@ -82,6 +85,9 @@ struct LLMCli {
         case "stop":
             await stopCommand(args: args)
 
+        case "mcp":
+            await MCPCommand.run(args: args)
+
         case "help", "--help", "-h":
             printHelp()
 
@@ -109,7 +115,9 @@ struct LLMCli {
           ps                    Show active model sessions
           stop                  Stop running sessions
           tools, t              Manage and demonstrate tool calling
+          mcp                   Manage Model Context Protocol servers
           serve, s              Start HTTP API server
+          serve-mcp             Start MCP server (expose llm-cli tools)
           templates             Manage prompt templates
           history, hist         View or clear conversation history
           status                Check Foundation Models availability
@@ -125,7 +133,10 @@ struct LLMCli {
           llm generate -f prompt.txt
           echo "Hello" | llm generate
           llm chat
+          llm chat --mcp-server filesystem
+          llm mcp list-servers
           llm serve --port 8765
+          llm serve-mcp
 
         For command-specific help:
           llm <command> --help

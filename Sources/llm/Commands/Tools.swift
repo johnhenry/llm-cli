@@ -1,5 +1,4 @@
 import Foundation
-import FoundationModels
 
 struct ToolsCommand {
     static func run(args: [String]) async {
@@ -34,7 +33,7 @@ struct ToolsCommand {
         }
 
         do {
-            let llm = try LLM(size: modelSize)
+            let llm = try await LLM(size: modelSize)
 
             // Register sample tools
             registerSampleTools(llm: llm)
@@ -85,9 +84,8 @@ struct ToolsCommand {
             let timeTool = GetCurrentTimeTool()
             output.printMessage("Tool: \(timeTool.name)")
             output.printMessage("Description: \(timeTool.description)")
-            let result = try await timeTool.call(arguments: GetCurrentTimeTool.Arguments())
-            // GeneratedContent can be converted to String or use description
-            output.printMessage("Result: \(String(describing: result))")
+            let result = try await timeTool.execute(arguments: [:])
+            output.printMessage("Result: \(result)")
             output.printMessage("")
         } catch {
             output.printMessage("Error: \(error.localizedDescription)\n")
@@ -98,8 +96,8 @@ struct ToolsCommand {
             let weatherTool = GetWeatherTool()
             output.printMessage("Tool: \(weatherTool.name)")
             output.printMessage("Description: \(weatherTool.description)")
-            let result = try await weatherTool.call(arguments: GetWeatherTool.Arguments(location: "San Francisco"))
-            output.printMessage("Result: \(String(describing: result))")
+            let result = try await weatherTool.execute(arguments: ["location": "San Francisco"])
+            output.printMessage("Result: \(result)")
             output.printMessage("")
         } catch {
             output.printMessage("Error: \(error.localizedDescription)\n")
@@ -110,8 +108,8 @@ struct ToolsCommand {
             let searchTool = SearchFilesTool()
             output.printMessage("Tool: \(searchTool.name)")
             output.printMessage("Description: \(searchTool.description)")
-            let result = try await searchTool.call(arguments: SearchFilesTool.Arguments(pattern: ".swift"))
-            output.printMessage("Result: \(String(describing: result))")
+            let result = try await searchTool.execute(arguments: ["pattern": ".swift"])
+            output.printMessage("Result: \(result)")
             output.printMessage("")
         } catch {
             output.printMessage("Error: \(error.localizedDescription)\n")

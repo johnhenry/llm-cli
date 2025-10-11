@@ -10,6 +10,7 @@ struct GenerateCommand {
         var modelSize: ModelSize = .medium
         var useContext = false
         var fileInput: String?
+        var mcpServers: [String] = []
 
         // Check for default model from environment
         if let envModel = ProcessInfo.processInfo.environment["LLM_MODEL"] {
@@ -35,6 +36,11 @@ struct GenerateCommand {
                 i += 1
                 if i < args.count {
                     modelSize = ModelSize(rawValue: args[i]) ?? .medium
+                }
+            case "--mcp-server":
+                i += 1
+                if i < args.count {
+                    mcpServers.append(args[i])
                 }
             case "--context", "-c":
                 useContext = true
@@ -97,7 +103,13 @@ struct GenerateCommand {
 
         // Generate
         do {
-            let llm = try LLM(size: modelSize)
+            let llm = try await LLM(size: modelSize)
+
+            // Load MCP tools if servers specified
+            var mcpClients: [MCPClientWrapper] = []
+            if !mcpServers.isEmpty {
+                await loadMCPTools(serverNames: mcpServers, llm: llm, output: output, clients: &mcpClients)
+            }
 
             if output.mode == .json {
                 // Generate complete response for JSON output
@@ -111,8 +123,30 @@ struct GenerateCommand {
                 print() // Newline at end
             }
 
+            // Disconnect MCP clients
+            for client in mcpClients {
+                await client.disconnect()
+            }
+
         } catch {
             output.printError(error)
+        }
+    }
+
+    @MainActor
+    private static func loadMCPTools(serverNames: [String], llm: LLM, output: OutputHandler, clients: inout [MCPClientWrapper]) async {
+        for serverName in serverNames {
+            do {
+                let (client, adapters) = try await MCPToolManager.loadToolsFromServer(serverName: serverName)
+                clients.append(client)
+
+                // Register tools with LLM
+                for adapter in adapters {
+                    llm.registerTool(adapter)
+                }
+            } catch {
+                // Silently fail for generate command - don't disrupt output
+            }
         }
     }
 
@@ -124,6 +158,7 @@ struct GenerateCommand {
           --file, -f <path>        Read prompt from file
           --template, -t <name>    Use a prompt template
           --model, -m <size>       Model size (small, medium, large)
+          --mcp-server <name>      Load tools from MCP server (can be used multiple times)
           --context, -c            Include conversation history
           --json                   Output in JSON format
 
@@ -137,6 +172,7 @@ struct GenerateCommand {
           llm generate -f prompt.txt
           echo "What is AI?" | llm generate
           llm generate --template summarize "Text to summarize"
+          llm generate --mcp-server filesystem "Read my README and summarize it"
           llm generate --json "Write a haiku about macOS"
         """)
     }

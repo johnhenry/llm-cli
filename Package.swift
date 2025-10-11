@@ -6,11 +6,15 @@ let package = Package(
     platforms: [
         .macOS("26.0")
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0")
+    ],
     targets: [
         .executableTarget(
             name: "llm",
-            dependencies: [],
+            dependencies: [
+                .product(name: "MCP", package: "swift-sdk")
+            ],
             path: "Sources/llm"
         )
     ]

@@ -37,7 +37,7 @@ struct ServeCommand {
         output.printMessage("\nPress Ctrl+C to stop\n")
 
         do {
-            let llm = try LLM(size: modelSize)
+            let llm = try await LLM(size: modelSize)
             try await startServer(port: port, llm: llm, output: output)
         } catch {
             output.printError(error)

@@ -1,22 +1,16 @@
 import Foundation
-import FoundationModels
 
 // Sample tool: Get current time
 final class GetCurrentTimeTool: Tool {
     let name = "getCurrentTime"
     let description = "Returns the current system time"
 
-    @Generable
-    struct Arguments {
-        // No arguments needed
-    }
-
-    func call(arguments: Arguments) async throws -> GeneratedContent {
+    func execute(arguments: [String: Any]) async throws -> String {
         let now = Date()
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .medium
-        return GeneratedContent(formatter.string(from: now))
+        return formatter.string(from: now)
     }
 }
 
@@ -25,15 +19,13 @@ final class GetWeatherTool: Tool {
     let name = "getWeather"
     let description = "Gets weather information for a location"
 
-    @Generable
-    struct Arguments {
-        @Guide(description: "Location to get weather for")
-        let location: String
-    }
+    func execute(arguments: [String: Any]) async throws -> String {
+        guard let location = arguments["location"] as? String else {
+            throw LLMError.invalidConfiguration
+        }
 
-    func call(arguments: Arguments) async throws -> GeneratedContent {
         // In real implementation, this would call a weather API
-        return GeneratedContent("Weather in \(arguments.location): Partly cloudy, 72°F")
+        return "Weather in \(location): Partly cloudy, 72°F"
     }
 }
 
@@ -42,28 +34,26 @@ final class SearchFilesTool: Tool {
     let name = "searchFiles"
     let description = "Searches for files in the current directory"
 
-    @Generable
-    struct Arguments {
-        @Guide(description: "File pattern to search for")
-        let pattern: String
-    }
+    func execute(arguments: [String: Any]) async throws -> String {
+        guard let pattern = arguments["pattern"] as? String else {
+            throw LLMError.invalidConfiguration
+        }
 
-    func call(arguments: Arguments) async throws -> GeneratedContent {
         // In real implementation, this would search the file system
         let fileManager = FileManager.default
         let currentPath = fileManager.currentDirectoryPath
 
         do {
             let files = try fileManager.contentsOfDirectory(atPath: currentPath)
-            let matching = files.filter { $0.contains(arguments.pattern) }
+            let matching = files.filter { $0.contains(pattern) }
 
             if matching.isEmpty {
-                return GeneratedContent("No files found matching '\(arguments.pattern)'")
+                return "No files found matching '\(pattern)'"
             } else {
-                return GeneratedContent("Found \(matching.count) file(s): \(matching.joined(separator: ", "))")
+                return "Found \(matching.count) file(s): \(matching.joined(separator: ", "))"
             }
         } catch {
-            return GeneratedContent("Error searching files: \(error.localizedDescription)")
+            return "Error searching files: \(error.localizedDescription)"
         }
     }
 }
