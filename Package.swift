@@ -11,7 +11,10 @@ let package = Package(
         .executableTarget(
             name: "llm",
             dependencies: [],
-            path: "Sources/llm"
+            path: "Sources/llm",
+            linkerSettings: [
+                .linkedFramework("Network")
+            ]
         )
     ]
 )

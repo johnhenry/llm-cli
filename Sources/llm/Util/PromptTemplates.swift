@@ -31,7 +31,7 @@ struct PromptTemplates {
 
         return contents
             .filter { $0.hasSuffix(".txt") }
-            .map { $0.replacingOccurrences(of: ".txt", with: "") }
+            .map { String($0.dropLast(4)) }
     }
 
     static func exists(named name: String) -> Bool {
@@ -40,10 +40,10 @@ struct PromptTemplates {
     }
 }
 
-enum TemplateError: Error {
+enum TemplateError: Error, LocalizedError {
     case notFound(String)
 
-    var localizedDescription: String {
+    var errorDescription: String? {
         switch self {
         case .notFound(let name):
             return "Template '\(name)' not found in \(PromptTemplates.templatesDir.path)"

@@ -45,7 +45,10 @@ struct ServeCommand {
     }
 
     private static func startServer(port: UInt16, llm: LLM, output: OutputHandler) async throws {
-        let listener = try NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
+            throw LLMError.invalidConfiguration
+        }
+        let listener = try NWListener(using: .tcp, on: nwPort)
 
         listener.newConnectionHandler = { connection in
             connection.start(queue: .global())

@@ -2,9 +2,9 @@ import Foundation
 import FoundationModels
 
 enum ModelSize: String {
-    case small = "foundation-small"
-    case medium = "foundation-medium"
-    case large = "foundation-large"
+    case small = "small"
+    case medium = "medium"
+    case large = "large"
 
     var systemModel: SystemLanguageModel {
         // All sizes currently map to default model
