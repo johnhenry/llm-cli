@@ -117,7 +117,15 @@ struct ServeCommand {
             output.printMessage("✅ Response sent (\(result.elapsed)s)\n")
 
         } catch {
-            let errorResponse = createHTTPResponse(statusCode: 500, body: "{\"error\": \"\(error.localizedDescription)\"}")
+            let errorDict: [String: String] = ["error": error.localizedDescription]
+            let errorBody: String
+            if let errorData = try? JSONEncoder().encode(errorDict),
+               let errorJson = String(data: errorData, encoding: .utf8) {
+                errorBody = errorJson
+            } else {
+                errorBody = "{\"error\": \"An error occurred\"}"
+            }
+            let errorResponse = createHTTPResponse(statusCode: 500, body: errorBody)
             connection.send(content: errorResponse.data(using: .utf8), completion: .contentProcessed { _ in
                 connection.cancel()
             })

@@ -3,8 +3,8 @@
 ## Summary
 This report documents bugs found during a comprehensive code review of the llm-cli repository.
 
-**Total Bugs Found: 8**
-**Total Bugs Fixed: 8**
+**Total Bugs Found: 9**
+**Total Bugs Fixed: 9**
 
 ---
 
@@ -267,6 +267,50 @@ if prompt.isEmpty {
 
 ---
 
+## Bug #9: Unsafe JSON String Interpolation in Error Handler
+**Severity:** 🟡 Medium (JSON Injection/Invalid JSON)
+**File:** `Sources/llm/Commands/Serve.swift`
+**Status:** ✅ Fixed
+
+### Description
+The HTTP server's error handler creates JSON responses by directly interpolating the error message into a string literal. If the error message contains quotes, backslashes, or control characters, it produces invalid JSON that breaks clients.
+
+### Impact
+- Invalid JSON responses when errors contain special characters
+- Client applications fail to parse error responses
+- Potential JSON injection vulnerability
+- Poor error handling UX
+
+### Example Problem
+```swift
+// If error.localizedDescription contains: Template "my-file" not found
+let errorResponse = createHTTPResponse(statusCode: 500, 
+    body: "{\"error\": \"Template "my-file" not found\"}")
+// Produces invalid JSON: {"error": "Template "my-file" not found"}
+//                                             ^ breaks JSON
+```
+
+### Fix
+Use `JSONEncoder` to properly escape the error message:
+```swift
+} catch {
+    let errorDict: [String: String] = ["error": error.localizedDescription]
+    let errorBody: String
+    if let errorData = try? JSONEncoder().encode(errorDict),
+       let errorJson = String(data: errorData, encoding: .utf8) {
+        errorBody = errorJson
+    } else {
+        errorBody = "{\"error\": \"An error occurred\"}"
+    }
+    let errorResponse = createHTTPResponse(statusCode: 500, body: errorBody)
+    connection.send(content: errorResponse.data(using: .utf8), completion: .contentProcessed { _ in
+        connection.cancel()
+    })
+}
+```
+
+---
+
 ## Additional Observations
 
 ### Potential Future Improvements (Not Bugs)
@@ -305,11 +349,13 @@ To verify these fixes, test the following scenarios:
 
 All identified bugs have been fixed. The changes are minimal and focused on the specific issues without altering the overall architecture or functionality of the application. The fixes improve:
 - Build reliability (Bug #1)
-- Error handling consistency (Bug #2, #5, #8)
+- Error handling consistency (Bug #2, #5, #8, #9)
 - Data integrity (Bug #3, #6)
 - User experience (Bug #4, #8)
 - Thread safety (Bug #7)
+- Security and JSON handling (Bug #9)
 
 **Report Generated:** 2025-10-12
 **Reviewed By:** GitHub Copilot
 **Updated:** 2025-10-12 (Added bugs #6, #7, #8)
+**Updated:** 2025-10-12 (Added bug #9)
