@@ -42,10 +42,11 @@ enum LLMError: Error, LocalizedError {
 final class LLM: @unchecked Sendable {
     let size: ModelSize
     private let session: LanguageModelSession
-    private var customTools: [any Tool] = []
+    private let customTools: [any Tool]
 
-    init(size: ModelSize = .medium, instructions: String? = nil) throws {
+    init(size: ModelSize = .medium, instructions: String? = nil, tools: [any Tool] = []) throws {
         self.size = size
+        self.customTools = tools
 
         let model = size.systemModel
 
@@ -131,10 +132,6 @@ final class LLM: @unchecked Sendable {
 
         let elapsed = Date().timeIntervalSince(startTime)
         return GenerationResult(tokens: tokens, text: fullText.trimmingCharacters(in: .whitespaces), elapsed: elapsed)
-    }
-
-    func registerTool(_ tool: any Tool) {
-        customTools.append(tool)
     }
 
     func getTools() -> [any Tool] {

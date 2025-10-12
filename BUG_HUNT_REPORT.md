@@ -3,8 +3,8 @@
 ## Summary
 This report documents bugs found during a comprehensive code review of the llm-cli repository.
 
-**Total Bugs Found: 5**
-**Total Bugs Fixed: 5**
+**Total Bugs Found: 8**
+**Total Bugs Fixed: 8**
 
 ---
 
@@ -142,6 +142,131 @@ let listener = try NWListener(using: .tcp, on: nwPort)
 
 ---
 
+## Bug #6: JSONDecoder Date Strategy Mismatch
+**Severity:** 🟡 Medium (Data Corruption Risk)
+**File:** `Sources/llm/Util/HistoryStore.swift`
+**Status:** ✅ Fixed
+
+### Description
+The `HistoryStore` saves conversation history with dates encoded using `.iso8601` strategy, but loads them without setting a date decoding strategy, using the default instead. This mismatch causes saved history files to fail to load correctly.
+
+### Impact
+- Saved conversation history could not be loaded properly
+- Dates would fail to decode, causing the history to be discarded
+- Users would lose their conversation history silently
+
+### Example Problem
+```swift
+// Saving (line 69):
+encoder.dateEncodingStrategy = .iso8601  // Saves as ISO8601 format
+
+// Loading (line 40):
+JSONDecoder().decode(...)  // Uses default strategy, can't decode ISO8601!
+```
+
+### Fix
+Added matching date decoding strategy:
+```swift
+if let data = try? Data(contentsOf: historyPath) {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601  // Now matches encoding!
+    if let loaded = try? decoder.decode(ConversationHistory.self, from: data) {
+        self.history = loaded
+    } else {
+        self.history = ConversationHistory()
+    }
+} else {
+    self.history = ConversationHistory()
+}
+```
+
+---
+
+## Bug #7: Thread Safety Violation in LLM Class
+**Severity:** 🔴 Critical (Race Condition)
+**File:** `Sources/llm/Models/LLM.swift`
+**Status:** ✅ Fixed
+
+### Description
+The `LLM` class is marked as `@unchecked Sendable` but contains a mutable `private var customTools` array. The `registerTool()` method modifies this array without synchronization, creating a race condition when the class is used across async boundaries.
+
+### Impact
+- Potential data races when tools are registered
+- Undefined behavior in concurrent contexts
+- Violates Swift's Sendable contract
+- Could cause crashes or data corruption
+
+### Example Problem
+```swift
+final class LLM: @unchecked Sendable {
+    private var customTools: [any Tool] = []  // Mutable!
+    
+    func registerTool(_ tool: any Tool) {
+        customTools.append(tool)  // UNSAFE: No synchronization!
+    }
+}
+```
+
+### Fix
+Made `customTools` immutable and passed tools at initialization:
+```swift
+final class LLM: @unchecked Sendable {
+    private let customTools: [any Tool]  // Now immutable
+    
+    init(size: ModelSize = .medium, instructions: String? = nil, tools: [any Tool] = []) throws {
+        self.size = size
+        self.customTools = tools  // Set once at init
+        ...
+    }
+    
+    // Removed registerTool() method
+}
+```
+
+Updated `ToolsCommand` to pass tools at initialization:
+```swift
+let sampleTools: [any Tool] = [
+    GetCurrentTimeTool(),
+    GetWeatherTool(),
+    SearchFilesTool()
+]
+let llm = try LLM(size: modelSize, tools: sampleTools)
+```
+
+---
+
+## Bug #8: Missing Empty Prompt Validation
+**Severity:** 🟡 Medium (Poor User Experience)
+**File:** `Sources/llm/Commands/Generate.swift`
+**Status:** ✅ Fixed
+
+### Description
+The `generate` command doesn't validate that a prompt was provided. If a user runs `llm generate` without arguments and without piped input, the command would attempt to generate text with an empty string instead of showing an error.
+
+### Impact
+- Poor user experience
+- Confusing behavior (generates nothing or errors cryptically)
+- Wastes API/model resources
+
+### Example Problem
+```bash
+$ llm generate
+# Would try to generate with empty prompt instead of showing help
+```
+
+### Fix
+Added validation before generation:
+```swift
+// Validate that we have a prompt
+if prompt.isEmpty {
+    output.printMessage("Error: No prompt provided")
+    output.printMessage("Run 'llm generate --help' for usage information")
+    return
+}
+```
+
+---
+
 ## Additional Observations
 
 ### Potential Future Improvements (Not Bugs)
@@ -170,6 +295,9 @@ To verify these fixes, test the following scenarios:
 3. **Template Operations**: Test templates with `.txt` in their names
 4. **Server Start**: Test `llm serve --port 8765`
 5. **Error Messages**: Verify error messages display correctly
+6. **History Persistence**: Test saving and loading conversation history with dates
+7. **Tools**: Test `llm tools --list` and `llm tools --demo`
+8. **Empty Prompt**: Test `llm generate` with no arguments
 
 ---
 
@@ -177,9 +305,11 @@ To verify these fixes, test the following scenarios:
 
 All identified bugs have been fixed. The changes are minimal and focused on the specific issues without altering the overall architecture or functionality of the application. The fixes improve:
 - Build reliability (Bug #1)
-- Error handling consistency (Bug #2, #5)
-- Data integrity (Bug #3)
-- User experience (Bug #4)
+- Error handling consistency (Bug #2, #5, #8)
+- Data integrity (Bug #3, #6)
+- User experience (Bug #4, #8)
+- Thread safety (Bug #7)
 
 **Report Generated:** 2025-10-12
 **Reviewed By:** GitHub Copilot
+**Updated:** 2025-10-12 (Added bugs #6, #7, #8)
