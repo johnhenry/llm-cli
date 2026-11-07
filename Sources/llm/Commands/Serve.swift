@@ -45,7 +45,10 @@ struct ServeCommand {
     }
 
     private static func startServer(port: UInt16, llm: LLM, output: OutputHandler) async throws {
-        let listener = try NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
+            throw LLMError.invalidConfiguration
+        }
+        let listener = try NWListener(using: .tcp, on: nwPort)
 
         listener.newConnectionHandler = { connection in
             connection.start(queue: .global())
@@ -114,7 +117,15 @@ struct ServeCommand {
             output.printMessage("✅ Response sent (\(result.elapsed)s)\n")
 
         } catch {
-            let errorResponse = createHTTPResponse(statusCode: 500, body: "{\"error\": \"\(error.localizedDescription)\"}")
+            let errorDict: [String: String] = ["error": error.localizedDescription]
+            let errorBody: String
+            if let errorData = try? JSONEncoder().encode(errorDict),
+               let errorJson = String(data: errorData, encoding: .utf8) {
+                errorBody = errorJson
+            } else {
+                errorBody = "{\"error\": \"An error occurred\"}"
+            }
+            let errorResponse = createHTTPResponse(statusCode: 500, body: errorBody)
             connection.send(content: errorResponse.data(using: .utf8), completion: .contentProcessed { _ in
                 connection.cancel()
             })

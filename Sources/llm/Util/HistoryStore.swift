@@ -36,9 +36,14 @@ actor HistoryStore {
         self.historyPath = historyDir.appendingPathComponent("history.json")
 
         // Load existing history or create new
-        if let data = try? Data(contentsOf: historyPath),
-           let loaded = try? JSONDecoder().decode(ConversationHistory.self, from: data) {
-            self.history = loaded
+        if let data = try? Data(contentsOf: historyPath) {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            if let loaded = try? decoder.decode(ConversationHistory.self, from: data) {
+                self.history = loaded
+            } else {
+                self.history = ConversationHistory()
+            }
         } else {
             self.history = ConversationHistory()
         }

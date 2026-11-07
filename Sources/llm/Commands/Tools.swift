@@ -34,10 +34,14 @@ struct ToolsCommand {
         }
 
         do {
-            let llm = try LLM(size: modelSize)
-
-            // Register sample tools
-            registerSampleTools(llm: llm)
+            // Create sample tools
+            let sampleTools: [any Tool] = [
+                GetCurrentTimeTool(),
+                GetWeatherTool(),
+                SearchFilesTool()
+            ]
+            
+            let llm = try LLM(size: modelSize, tools: sampleTools)
 
             if shouldList {
                 listTools(llm: llm, output: output)
@@ -52,12 +56,6 @@ struct ToolsCommand {
         } catch {
             output.printError(error)
         }
-    }
-
-    private static func registerSampleTools(llm: LLM) {
-        llm.registerTool(GetCurrentTimeTool())
-        llm.registerTool(GetWeatherTool())
-        llm.registerTool(SearchFilesTool())
     }
 
     private static func listTools(llm: LLM, output: OutputHandler) {

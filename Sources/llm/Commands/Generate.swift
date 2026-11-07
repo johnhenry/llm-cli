@@ -95,6 +95,13 @@ struct GenerateCommand {
             }
         }
 
+        // Validate that we have a prompt
+        if prompt.isEmpty {
+            output.printMessage("Error: No prompt provided")
+            output.printMessage("Run 'llm generate --help' for usage information")
+            return
+        }
+
         // Generate
         do {
             let llm = try LLM(size: modelSize)
